@@ -1,0 +1,51 @@
+import socket
+
+# Define the target IP address
+target = '192.168.1.1'
+
+# Define a range of ports to scan
+start_port = 1
+end_port = 1024
+
+# Create a function to check if a port is open
+def port_scan(port):
+    try:
+        # Create a socket object
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Set the timeout to 1 second
+        sock.settimeout(1)
+
+        # Connect to the target IP and port
+        result = sock.connect_ex((target, port))
+
+        # Close the socket
+        sock.close()
+
+        # If the result is 0, the port is open
+        if result == 0:
+            return True
+        else:
+            return False
+
+    except:
+        return False
+
+# Scan the ports in the specified range
+for port in range(start_port, end_port+1):
+    if port_scan(port):
+        print(f"Port {port} is open")
+
+# Sniff network traffic
+sniffer_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
+sniffer_socket.bind((target, 0))
+sniffer_socket.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+sniffer_socket.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
+
+# Read and print the network traffic
+while True:
+    packet = sniffer_socket.recvfrom(65565)
+    print(packet)
+
+# Turn off promiscuous mode
+sniffer_socket.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
